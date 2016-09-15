@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>auto_experimenter</name>
+  <version>0.0.1</version>
+  <description>
+    
+    Automatically performs experiments of choice
+    
+  </description>
+  
+  <maintainer email="winkler@cs.uni-bremen.de">Jan Winkler</maintainer>
+  <author email="winkler@cs.uni-bremen.de">Jan Winkler</author>
+  
+  <license>BSD</license>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

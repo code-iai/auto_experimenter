@@ -1,0 +1,9 @@
+<launch>
+  
+  <arg name="experiment_description" value="/experiment_description" />
+  
+  <node name="auto_experimenter" pkg="auto_experimenter" type="continuous.py" required="true" output="screen">
+    <param name="experiment_description_parameter" value="$(arg experiment_description)" />
+  </node>
+  
+</launch>
