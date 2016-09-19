@@ -12,8 +12,17 @@ if [ "${SCRIPT_PATH}" != "" ]; then
     fi
     
     for i in `seq ${N_COUNT}`; do
+	echo "Starting auxiliary roscore"
+	roscore &
+	CORE_PID=$!
+	sleep 2
+	
+	echo "Parameterizing and starting experiment"
 	rosrun auto_experimenter load_experiment_description.py ${SCRIPT_PATH}
 	roslaunch auto_experimenter auto_experimenter.launch variance:="${VARIANCE}"
+	
+	echo "Killing auxiliary roscore"
+	kill -s SIGKILL $CORE_PID
     done
 else
     echo "Usage: $0 <script-path> [n=1]"
