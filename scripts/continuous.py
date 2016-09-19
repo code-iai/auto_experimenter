@@ -336,70 +336,39 @@ def runNextCleaner():
 
 
 def loadWorker(worker, is_cleaner=False):
-    details = {}
-    
-    for detail in worker:
-        key = detail.keys()[0]
-        details[key] = detail[key]
-    
-    if not "command" in details:
-        details["command"] = ""
-    
-    if not "parameters" in details:
-        details["parameters"] = []
-    
-    if not "checklist" in details:
-        details["checklist"] = {}
-    
-    if not "quithooks" in details:
-        details["quithooks"] = {}
-    
-    if not "timeout" in details:
-        details["timeout"] = None
-    
-    parameters = []
-    for parameter in details["parameters"]:
-        parameters.append(str(parameter))
-    
-    details["parameters"] = parameters
-    
     checklist = {}
     quithooks = {}
     
-    for item in details["checklist"]:
-        data = item["item"]
-        checklistitem = {}
-        
-        for detail in data:
-            key = detail.keys()[0]
-            checklistitem[key] = detail[key]
-        
-        addToChecklist(checklist, checklistitem["name"], checklistitem["matchmode"], checklistitem["template"], checklistitem["message"])
+    if "checklist" in worker:
+        for item in worker["checklist"]:
+            addToChecklist(checklist, item["name"], item["matchmode"], item["template"], item["message"])
     
-    for item in details["quithooks"]:
-        data = item["item"]
-        quithooksitem = {}
-        
-        for detail in data:
-            key = detail.keys()[0]
-            quithooksitem[key] = detail[key]
-        
-        addToChecklist(quithooks, quithooksitem["name"], quithooksitem["matchmode"], quithooksitem["template"], quithooksitem["message"])
+    if "quithooks" in worker:
+        for item in worker["quithooks"]:
+            addToChecklist(quithooks, item["name"], item["matchmode"], item["template"], item["message"])
     
     if not is_cleaner:
-        addWorker(details["command"], details["parameters"], checklist, quithooks, details["timeout"])
+        addWorker(worker["command"], worker["parameters"], checklist, quithooks, worker["timeout"])
     else:
-        addCleaner(details["command"], details["parameters"], checklist, quithooks, details["timeout"])
+        addCleaner(worker["command"], worker["parameters"], checklist, quithooks, worker["timeout"])
 
 
 def loadWorkersFromYaml(doc):
-    for worker_wrap in doc:
-        if "worker" in worker_wrap:
-            loadWorker(worker_wrap["worker"])
+    if "workers" in doc:
+        for worker in doc["workers"]:
+            loadWorker(worker)
     
-    for worker_wrap in doc:
-        if "cleaner" in worker_wrap:
-            loadWorker(worker_wrap["cleaner"], True)
+    if "cleaners" in doc:
+        for cleaner in doc["cleaners"]:
+            loadWorker(cleaner, True)
+
+
+def loadWorkersFromYaml(doc):
+    if "workers" in doc:
+        for worker in doc["workers"]:
+            for worker_wrap in doc:
+                if "worker" in worker_wrap:
+                    loadWorker(worker)
 
 
 if __name__ == "__main__":
