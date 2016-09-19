@@ -112,8 +112,23 @@ def addWorker(cmd, args, checklist, quithooks, timeout = None):
     workers_schedule.append([cmd, args, checklist, quithooks, timeout])
 
 
+def addCleaner(cmd, args, checklist, quithooks, timeout = None):
+    cleaners_schedule.append([cmd, args, checklist, quithooks, timeout])
+
+
 def run(w, args):
     w.run(args)
+
+
+def kill_with_children(pid, sig):
+    ps_command = subprocess.Popen("ps -o pid --ppid %d --noheaders" % pid, shell=True, stdout=subprocess.PIPE)
+    ps_output = ps_command.stdout.read()
+    retcode = ps_command.wait()
+    
+    for pid_str in ps_output.strip().split("\n")[:-1]:
+        os.kill(int(pid_str), sig)
+    
+    os.kill(pid, sig)
 
 
 def signalHandlerProxy(signal, frame):
@@ -122,7 +137,7 @@ def signalHandlerProxy(signal, frame):
     signalHandler(signal, frame)
 
 
-def signalHandler(signal, frame):
+def signalHandler(sig, frame):
     global killed
     global workers
     global processes
@@ -133,7 +148,16 @@ def signalHandler(signal, frame):
         p.queue.put("quit")
         p.queue.get()
         p.terminate()
-        p.join()
+        
+        p.join(10)
+        if p.is_alive():
+            message("Core", "Process", "Process '" + p.name + "' (pid " + str(p.pid) + ") persists after termination, killing it softly.")
+            kill_with_children(p.pid, signal.SIGTERM)
+        
+        p.join(2)
+        if p.is_alive():
+            message("Core", "Process", "Process '" + p.name + "' (pid " + str(p.pid) + ") persists after soft kill, killing it hard.")
+            kill_with_children(p.pid, signal.SIGKILL)
     
     for w in workers:
         w.kill()
@@ -288,7 +312,30 @@ def runNextWorker():
     return False
 
 
-def loadWorker(worker):
+def runNextCleaner():
+    global cleaners_schedule
+    
+    if len(cleaners_schedule) > 0:
+        current_cleaner = cleaners_schedule[0]
+        cleaners_schedule = cleaners_schedule[1:]
+        
+        w = Worker(current_cleaner[0])
+        
+        if current_cleaner[3]:
+            to_msg = " and a timeout of " + str(current_cleaner[4]) + " sec"
+        else:
+            to_msg = ""
+        
+        message(w.fullName(), "Run cleaner with parameters", str(current_cleaner[1]) + to_msg)
+        runWorkerWithTimeout(w, current_cleaner[1], current_cleaner[2], current_cleaner[3], current_cleaner[4])
+        message(w.fullName(), "Run complete", "Advancing pipeline")
+        
+        return True
+    
+    return False
+
+
+def loadWorker(worker, is_cleaner=False):
     details = {}
     
     for detail in worker:
@@ -339,19 +386,27 @@ def loadWorker(worker):
         
         addToChecklist(quithooks, quithooksitem["name"], quithooksitem["matchmode"], quithooksitem["template"], quithooksitem["message"])
     
-    addWorker(details["command"], details["parameters"], checklist, quithooks, details["timeout"])
+    if not is_cleaner:
+        addWorker(details["command"], details["parameters"], checklist, quithooks, details["timeout"])
+    else:
+        addCleaner(details["command"], details["parameters"], checklist, quithooks, details["timeout"])
 
 
 def loadWorkersFromYaml(doc):
     for worker_wrap in doc:
         if "worker" in worker_wrap:
             loadWorker(worker_wrap["worker"])
+    
+    for worker_wrap in doc:
+        if "cleaner" in worker_wrap:
+            loadWorker(worker_wrap["cleaner"], True)
 
 
 if __name__ == "__main__":
     rospy.init_node("auto_experimenter", anonymous=True)
     
     global workers_schedule
+    global cleaners_schedule
     global workers
     global killed
     global last_message_did_newline
@@ -359,6 +414,7 @@ if __name__ == "__main__":
     global logged_lines
     
     workers_schedule = []
+    cleaners_schedule = []
     workers = []
     killed = False
     last_message_did_newline = True
@@ -381,5 +437,9 @@ if __name__ == "__main__":
         
         message("Core", "All tasks completed", "Tearing down workers")
         globalKill()
+        
+        message("Core", "Cleanup procedure", "Running cleaners")
+        while runNextCleaner():
+            pass
     else:
         message("Core", "Invalid", "No or no valid yaml configuration found (using parameter '" + param + "')")
