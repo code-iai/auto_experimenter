@@ -361,7 +361,7 @@ def loadWorker(worker, is_cleaner=False):
     if "quithooks" in worker:
         for item in worker["quithooks"]:
             addToChecklist(quithooks, item["name"], item["matchmode"], item["template"], item["message"])
-    print "checklist:", checklist
+    
     if not is_cleaner:
         addWorker(worker["command"], worker["parameters"], checklist, quithooks, timeout, append_variance)
     else:
