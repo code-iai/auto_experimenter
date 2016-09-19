@@ -56,6 +56,11 @@ class Worker(object):
     
     def run(self, args = []):
         if self.done:
+            strargs = []
+            for arg in args:
+                strargs.append(str(arg))
+            args = strargs
+            
             try:
                 self.process = subprocess.Popen([self.executable] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
                 self.done = False

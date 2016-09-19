@@ -288,6 +288,7 @@ def runWorkerWithTimeout(w, args = [], checklist = {}, quithooks = {}, timeout =
         
         if p.is_alive():
             message(w.fullName(), "Run", "Timeout reached, shutting down.")
+            printLoggedLines("Timeout")
             globalKill()
     else:
         workers.append(w)
@@ -349,6 +350,10 @@ def loadWorker(worker, is_cleaner=False):
         if worker["append-variance"] == True:
             append_variance = True
     
+    timeout = ""
+    if "timeout" in worker:
+        timeout = worker["timeout"]
+    
     if "checklist" in worker:
         for item in worker["checklist"]:
             addToChecklist(checklist, item["name"], item["matchmode"], item["template"], item["message"])
@@ -356,11 +361,11 @@ def loadWorker(worker, is_cleaner=False):
     if "quithooks" in worker:
         for item in worker["quithooks"]:
             addToChecklist(quithooks, item["name"], item["matchmode"], item["template"], item["message"])
-    
+    print "checklist:", checklist
     if not is_cleaner:
-        addWorker(worker["command"], worker["parameters"], checklist, quithooks, worker["timeout"], append_variance)
+        addWorker(worker["command"], worker["parameters"], checklist, quithooks, timeout, append_variance)
     else:
-        addCleaner(worker["command"], worker["parameters"], checklist, quithooks, worker["timeout"])
+        addCleaner(worker["command"], worker["parameters"], checklist, quithooks, timeout)
 
 
 def loadWorkersFromYaml(doc):
@@ -371,14 +376,6 @@ def loadWorkersFromYaml(doc):
     if "cleaners" in doc:
         for cleaner in doc["cleaners"]:
             loadWorker(cleaner, True)
-
-
-def loadWorkersFromYaml(doc):
-    if "workers" in doc:
-        for worker in doc["workers"]:
-            for worker_wrap in doc:
-                if "worker" in worker_wrap:
-                    loadWorker(worker)
 
 
 def loadVariances(doc, settings):
@@ -437,8 +434,6 @@ def instantiateVariance(variances):
             final_variances[variance] = val
         else:
             final_variances[variance] = variances[variance]["value"]
-    
-    print "final: ", final_variances
     
     return final_variances
 
