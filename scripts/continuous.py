@@ -344,7 +344,8 @@ def loadWorker(worker):
 
 def loadWorkersFromYaml(doc):
     for worker_wrap in doc:
-        loadWorker(worker_wrap["worker"])
+        if "worker" in worker_wrap:
+            loadWorker(worker_wrap["worker"])
 
 
 if __name__ == "__main__":
