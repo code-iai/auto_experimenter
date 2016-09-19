@@ -39,6 +39,7 @@ import signal
 import sys
 import yaml
 import json
+import random
 import multiprocessing
 import subprocess
 import rospy
@@ -109,7 +110,10 @@ def message(sender, subject, msg, do_newline = True):
     sys.stdout.flush()
 
 
-def addWorker(cmd, args, checklist, quithooks, timeout = None):
+def addWorker(cmd, args, checklist, quithooks, timeout = None, append_variance = False):
+    if append_variance:
+        args = args + [json.dumps(global_variance)]
+    
     workers_schedule.append([cmd, args, checklist, quithooks, timeout])
 
 
@@ -290,14 +294,14 @@ def runWorkerWithTimeout(w, args = [], checklist = {}, quithooks = {}, timeout =
         runWorker(w, args, checklist, quithooks)
 
 
-def runNextWorker(variances):
+def runNextWorker():
     global workers_schedule
     
     if len(workers_schedule) > 0 and not killed:
         current_worker = workers_schedule[0]
         workers_schedule = workers_schedule[1:]
         
-        w = Worker(current_worker[0], variances)
+        w = Worker(current_worker[0])
         
         if current_worker[3]:
             to_msg = " and a timeout of " + str(current_worker[4]) + " sec"
@@ -340,6 +344,11 @@ def loadWorker(worker, is_cleaner=False):
     checklist = {}
     quithooks = {}
     
+    append_variance = False
+    if "append-variance" in worker:
+        if worker["append-variance"] == True:
+            append_variance = True
+    
     if "checklist" in worker:
         for item in worker["checklist"]:
             addToChecklist(checklist, item["name"], item["matchmode"], item["template"], item["message"])
@@ -349,7 +358,7 @@ def loadWorker(worker, is_cleaner=False):
             addToChecklist(quithooks, item["name"], item["matchmode"], item["template"], item["message"])
     
     if not is_cleaner:
-        addWorker(worker["command"], worker["parameters"], checklist, quithooks, worker["timeout"])
+        addWorker(worker["command"], worker["parameters"], checklist, quithooks, worker["timeout"], append_variance)
     else:
         addCleaner(worker["command"], worker["parameters"], checklist, quithooks, worker["timeout"])
 
@@ -390,9 +399,46 @@ def loadVariances(doc, settings):
         if "distribution" in yaml_variances[variance]:
             final_variances[variance]["distribution"] = yaml_variances[variance]["distribution"]
         
+        if "value-range" in yaml_variances[variance]:
+            final_variances[variance]["value-range"] = yaml_variances[variance]["value-range"]
+        
         if variance in settings:
             if "distribution" in settings[variance]:
                 final_variances[variance]["distribution"] = settings[variance]["distribution"]
+            
+            if "value-range" in settings[variance]:
+                final_variances[variance]["value-range"] = settings[variance]["value-range"]
+        
+        final_variances[variance]["value-type"] = yaml_variances[variance]["value-type"]
+    
+    return final_variances
+
+
+def instantiateVariance(variances):
+    final_variances = {}
+    random.seed()
+    
+    for variance in variances:
+        final_variances[variance] = {}
+        
+        if "range" in variances[variance]["value-type"]:
+            val = 0
+            range_type = variances[variance]["value-type"][0]
+            
+            if "value-range" in variances[variance]:
+                low = variances[variance]["value-range"][0]
+                high = variances[variance]["value-range"][1]
+            
+            if range_type == "integer":
+                val = random.randrange(low, high + 1)
+            elif range_type == "percentage":
+                val = random.randrange(low * 100, high * 100 + 1) / 100.0
+            
+            final_variances[variance] = val
+        else:
+            final_variances[variance] = variances[variance]["value"]
+    
+    print "final: ", final_variances
     
     return final_variances
 
@@ -407,6 +453,7 @@ if __name__ == "__main__":
     global last_message_did_newline
     global processes
     global logged_lines
+    global global_variance
     
     workers_schedule = []
     cleaners_schedule = []
@@ -415,6 +462,7 @@ if __name__ == "__main__":
     last_message_did_newline = True
     processes = []
     logged_lines = []
+    global_variance = {}
     
     doc = None
     
@@ -423,10 +471,6 @@ if __name__ == "__main__":
     doc = yaml.load(yaml_contents)
     
     if doc:
-        loadWorkersFromYaml(doc)
-        
-        signal.signal(signal.SIGINT, signalHandlerProxy)
-        
         try:
             param_val = rospy.get_param("~task_variance", "{}")
             variances_settings = json.loads(param_val)
@@ -434,8 +478,13 @@ if __name__ == "__main__":
             variances_settings = {}
         
         variances = loadVariances(doc, variances_settings)
+        global_variance = instantiateVariance(variances)
         
-        while runNextWorker(variances) and not killed:
+        loadWorkersFromYaml(doc)
+        
+        signal.signal(signal.SIGINT, signalHandlerProxy)
+        
+        while runNextWorker() and not killed:
             pass
         
         message("Core", "All tasks completed", "Tearing down workers")
