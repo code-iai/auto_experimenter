@@ -1,9 +1,11 @@
 <launch>
   
   <arg name="experiment_description" value="/experiment_description" />
+  <arg name="variance" default="{}" />
   
   <node name="auto_experimenter" pkg="auto_experimenter" type="continuous.py" required="true" output="screen">
     <param name="experiment_description_parameter" value="$(arg experiment_description)" />
+    <param name="task_variance" value="$(arg variance)"/>
   </node>
   
 </launch>

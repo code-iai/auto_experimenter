@@ -38,6 +38,7 @@ import time
 import signal
 import sys
 import yaml
+import json
 import multiprocessing
 import subprocess
 import rospy
@@ -289,14 +290,14 @@ def runWorkerWithTimeout(w, args = [], checklist = {}, quithooks = {}, timeout =
         runWorker(w, args, checklist, quithooks)
 
 
-def runNextWorker():
+def runNextWorker(variances):
     global workers_schedule
     
     if len(workers_schedule) > 0 and not killed:
         current_worker = workers_schedule[0]
         workers_schedule = workers_schedule[1:]
         
-        w = Worker(current_worker[0])
+        w = Worker(current_worker[0], variances)
         
         if current_worker[3]:
             to_msg = " and a timeout of " + str(current_worker[4]) + " sec"
@@ -371,6 +372,31 @@ def loadWorkersFromYaml(doc):
                     loadWorker(worker)
 
 
+def loadVariances(doc, settings):
+    yaml_variances = {}
+    
+    if "task-variances" in doc:
+        yaml_variances = doc["task-variances"]
+    
+    final_variances = {}
+    for variance in yaml_variances:
+        final_variances[variance] = {}
+        final_variances[variance]["value"] = yaml_variances[variance]["default"]
+        
+        if variance in settings:
+            if "value" in settings[variance]:
+                final_variances[variance]["value"] = settings[variance]["value"]
+        
+        if "distribution" in yaml_variances[variance]:
+            final_variances[variance]["distribution"] = yaml_variances[variance]["distribution"]
+        
+        if variance in settings:
+            if "distribution" in settings[variance]:
+                final_variances[variance]["distribution"] = settings[variance]["distribution"]
+    
+    return final_variances
+
+
 if __name__ == "__main__":
     rospy.init_node("auto_experimenter", anonymous=True)
     
@@ -401,7 +427,15 @@ if __name__ == "__main__":
         
         signal.signal(signal.SIGINT, signalHandlerProxy)
         
-        while runNextWorker() and not killed:
+        try:
+            param_val = rospy.get_param("~task_variance", "{}")
+            variances_settings = json.loads(param_val)
+        except ValueError:
+            variances_settings = {}
+        
+        variances = loadVariances(doc, variances_settings)
+        
+        while runNextWorker(variances) and not killed:
             pass
         
         message("Core", "All tasks completed", "Tearing down workers")

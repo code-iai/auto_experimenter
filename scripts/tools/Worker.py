@@ -45,11 +45,12 @@ def enqueueWorkerOutput(source, queue):
 
 
 class Worker(object):
-    def __init__(self, executable):
+    def __init__(self, executable, variances={}):
         self.executable = executable
         self.done = True
         self.lines = []
         self.process = None
+        self.variances = variances
     
     def fullName(self):
         return self.executable
