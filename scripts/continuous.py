@@ -60,7 +60,8 @@ def globalKill():
 
 
 def getTerminalWidth():
-    rows, columns = subprocess.check_output(['stty', 'size']).split()
+    #rows, columns = subprocess.check_output(['stty', 'size']).split()
+    columns = 80 # Otherwise, this doesn't work in docker; stty size is knowingly buggy in docker.
     
     return int(columns)
 
