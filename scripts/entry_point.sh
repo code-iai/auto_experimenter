@@ -3,6 +3,8 @@
 PACKAGE_PATH=$1
 COMMAND=$2
 
+echo "Entry point parameterization: $@"
+
 case $COMMAND in
     run)
 	# Run the experiment here
@@ -13,7 +15,7 @@ case $COMMAND in
     info)
 	# Extract information
 	SUBCOMMAND=$3
-	rosrun auto_experimenter info.py "--package ${PACKAGE_PATH}" ${SUBCOMMAND}
+	rosrun auto_experimenter info.py --package ${PACKAGE_PATH} ${SUBCOMMAND}
 	;;
     *)
 	# Unknown command
