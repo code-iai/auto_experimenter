@@ -6,14 +6,14 @@ COMMAND=$2
 case $COMMAND in
     run)
 	# Run the experiment here
-	PACKAGE_PATH=$3
+	echo "rosrun auto_experimenter run.sh --package ${PACKAGE_PATH}"
 	rosrun auto_experimenter run.sh "--package ${PACKAGE_PATH}"
 	;;
     
     info)
 	# Extract information
 	SUBCOMMAND=$3
-	rosrun auto_experimenter info.py --package ${PACKAGE_PATH} ${SUBCOMMAND}
+	rosrun auto_experimenter info.py "--package ${PACKAGE_PATH}" ${SUBCOMMAND}
 	;;
     *)
 	# Unknown command
