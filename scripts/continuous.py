@@ -61,14 +61,14 @@ def globalKill():
 
 def getTerminalWidth():
     #rows, columns = subprocess.check_output(['stty', 'size']).split()
-    columns = 80 # Otherwise, this doesn't work in docker; stty size is knowingly buggy in docker.
+    columns = 120 # Otherwise, this doesn't work in docker; stty size is knowingly buggy in docker.
     
     return int(columns)
 
 
 def message(sender, subject, msg, do_newline = True):
     global last_message_did_newline
-    max_width_no_newline = getTerminalWidth() - 15 # Terminal width - ("[Line] Out: " + some safety)
+    max_width_no_newline = getTerminalWidth()# - 15 # Terminal width - ("[Line] Out: " + some safety)
     
     sys.stdout.write('\r')
     
