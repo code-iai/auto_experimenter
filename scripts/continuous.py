@@ -38,7 +38,7 @@ from Queue import Queue, Empty
 
 
 def printLoggedLines(name):
-    message(name, "Failure output", "Last 50 lines of output")
+    message(name, "Failure output", "Last 250 lines of output")
     
     for line in logged_lines:
         print line
@@ -49,7 +49,7 @@ def logLine(line):
     
     logged_lines.append(line)
     length = len(logged_lines)
-    max_len = 50
+    max_len = 250
     
     if length > max_len:
         logged_lines = logged_lines[length - max_len:]
