@@ -188,7 +188,7 @@ def maintainChecklist(w, checklist, line):
                 return True
     
     if len(checklist) == 0:
-        echo "Funnily, this checklist is empty (although it shouldn't, as that's not allowed)."
+        print "Funnily, this checklist is empty (although it shouldn't, as that's not allowed)."
         return True
     
     return False
