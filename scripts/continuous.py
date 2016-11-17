@@ -188,6 +188,7 @@ def maintainChecklist(w, checklist, line):
                 return True
     
     if len(checklist) == 0:
+        echo "Funnily, this checklist is empty (although it shouldn't, as that's not allowed)."
         return True
     
     return False
@@ -299,7 +300,7 @@ def runNextWorker():
         else:
             to_msg = ""
         
-        message(w.fullName(), "Run worker with parameters", str(current_worker[1]) + to_msg)
+        message(w.fullName(), "Run worker with parameters", str(current_worker[1]) + to_msg), "(checklist length =", str(len(current_cleaner[2])) + ")"
         runWorkerWithTimeout(w, current_worker[1], current_worker[2], current_worker[3], current_worker[4])
         message(w.fullName(), "Run complete", "Advancing pipeline")
         
