@@ -180,6 +180,9 @@ def maintainChecklist(w, checklist, line):
             elif checklist[item]["matchmode"] == "contains":
                 if checklist[item]["template"] in line:
                     match = True
+            elif checklist[item]["matchmode"] == "beginswith":
+                if line[:len(checklist[item]["template"])] == checklist[item]["template"]:
+                    match = True
             
             if match:
                 checklist[item]["matched"] = True
