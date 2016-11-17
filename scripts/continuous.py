@@ -260,7 +260,7 @@ def runWorker(w, args, checklist, quithooks, queue=None):
             except Empty:
                 pass
     
-    print "Quit reason: " + str(w.hasLines()) + ", " + w.isDone() + ", " + str(killed)
+    print "Quit reason: " + str(w.hasLines()) + ", " + str(w.isDone()) + ", " + str(killed)
 
 
 def runWorkerWithTimeout(w, args = [], checklist = {}, quithooks = {}, timeout = None):
