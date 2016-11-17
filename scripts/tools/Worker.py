@@ -45,6 +45,8 @@ class Worker(object):
     
     def run(self, args = []):
         if self.done:
+            self.done = False
+            
             strargs = []
             for arg in args:
                 strargs.append(str(arg))
@@ -78,6 +80,7 @@ class Worker(object):
                 
                 self.lineQueue.put("no-error")
             except OSError:
+                self.done = True
                 self.lineQueue.put("fail-popen")
         else:
             print "A process is already running on this worker:", [self.executable] + args
