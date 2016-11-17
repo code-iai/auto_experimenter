@@ -11,6 +11,8 @@ if [ "${SCRIPT_PATH}" != "" ]; then
 	N_COUNT=1
     fi
     
+    echo "Running ${N_COUNT} experiments"
+    
     for i in `seq ${N_COUNT}`; do
 	echo "Starting auxiliary roscore"
 	roscore &

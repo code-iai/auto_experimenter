@@ -38,7 +38,7 @@ from Queue import Queue, Empty
 
 
 def printLoggedLines(name):
-    message(name, "Failure output", "Last 50 lines of output")
+    message(name, "Failure output", "Last 250 lines of output")
     
     for line in logged_lines:
         print line
@@ -49,7 +49,7 @@ def logLine(line):
     
     logged_lines.append(line)
     length = len(logged_lines)
-    max_len = 50
+    max_len = 250
     
     if length > max_len:
         logged_lines = logged_lines[length - max_len:]
@@ -61,14 +61,14 @@ def globalKill():
 
 def getTerminalWidth():
     #rows, columns = subprocess.check_output(['stty', 'size']).split()
-    columns = 80 # Otherwise, this doesn't work in docker; stty size is knowingly buggy in docker.
+    columns = 120 # Otherwise, this doesn't work in docker; stty size is knowingly buggy in docker.
     
     return int(columns)
 
 
 def message(sender, subject, msg, do_newline = True):
     global last_message_did_newline
-    max_width_no_newline = getTerminalWidth() - 15 # Terminal width - ("[Line] Out: " + some safety)
+    max_width_no_newline = getTerminalWidth()# - 15 # Terminal width - ("[Line] Out: " + some safety)
     
     sys.stdout.write('\r')
     
