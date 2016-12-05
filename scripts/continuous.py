@@ -182,6 +182,7 @@ def maintainChecklist(w, checklist, line):
                     match = True
             elif checklist[item]["matchmode"] == "beginswith":
                 if line[:len(checklist[item]["template"])] == checklist[item]["template"]:
+                    print "Matched a beginswith:", checklist[item]["template"]
                     match = True
             
             if match:
