@@ -383,6 +383,8 @@ def loadVariances(doc, settings):
         yaml_variances = doc["task-variances"]
     
     final_variances = {}
+    used_variances = []
+    
     for variance in yaml_variances:
         final_variances[variance] = {}
         final_variances[variance]["value"] = yaml_variances[variance]["default"]
@@ -406,6 +408,12 @@ def loadVariances(doc, settings):
         
         final_variances[variance]["value-type"] = yaml_variances[variance]["value-type"]
     
+    for setting in settings:
+        if not setting in final_variances:
+            final_variances[setting] = {}
+            final_variances[setting]["value"] = settings[setting]
+            final_variances[setting]["value-type"] = "string"
+    
     return final_variances
 
 
@@ -424,10 +432,13 @@ def instantiateVariance(variances):
                 low = variances[variance]["value-range"][0]
                 high = variances[variance]["value-range"][1]
             
-            if range_type == "integer":
-                val = random.randrange(low, high + 1)
-            elif range_type == "percentage":
-                val = random.randrange(low * 100, high * 100 + 1) / 100.0
+            if variances[variance]["value-type"] == "string":
+                val = variances[variance]["value"]
+            else:
+                if range_type == "integer":
+                    val = random.randrange(low, high + 1)
+                elif range_type == "percentage":
+                    val = random.randrange(low * 100, high * 100 + 1) / 100.0
             
             final_variances[variance] = val
         else:
