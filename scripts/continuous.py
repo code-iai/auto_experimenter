@@ -407,6 +407,9 @@ def loadVariances(doc, settings):
                 final_variances[variance]["value-range"] = settings[variance]["value-range"]
         
         final_variances[variance]["value-type"] = yaml_variances[variance]["value-type"]
+        
+        if "items" in yaml_variances[variance]:
+            final_variances[variance]["items"] = yaml_variances[variance]["items"]
     
     for setting in settings:
         if not setting in final_variances:
@@ -472,7 +475,7 @@ def instantiateVariance(variances):
                 final_variances[variance] = []
         elif "choice" in variances[variance]["value-type"]:
             items = variances[variance]["items"]
-            selected_item = items[int(random.random(len(items)))]
+            selected_item = items[int(random.random() * len(items))]
             
             # Only use symbol, not label
             final_variances[variance] = selected_item[1]
