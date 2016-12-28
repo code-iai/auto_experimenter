@@ -441,6 +441,41 @@ def instantiateVariance(variances):
                     val = random.randrange(low * 100, high * 100 + 1) / 100.0
             
             final_variances[variance] = val
+        elif "multiple-choice" in variances[variance]["value-type"]:
+            items = variances[variance]["items"]
+            
+            if len(items) > 0:
+                mean_amount = len(items) / 2
+                
+                if mean_amount == 0:
+                    mean_amount = 1
+                
+                if "mean-amount" in variances[variance]:
+                    mean_amount = variances[variance]["mean-amount"]
+                
+                do_it = True
+                threshold_percentage = float(mean_amount) / float(len(items))
+                
+                while do_it:
+                    selected_items = []
+                    
+                    for item in items:
+                        if random.random() < threshold_percentage:
+                            selected_items.append(item[1])
+                    
+                    if ((len(selected_items) == 0 and variances[variance]["allow-empty"]) or
+                        len(selected_items) > 0):
+                        do_it = False
+                
+                final_variances[variance] = selected_items
+            else:
+                final_variances[variance] = []
+        elif "choice" in variances[variance]["value-type"]:
+            items = variances[variance]["items"]
+            selected_item = items[int(random.random(len(items)))]
+            
+            # Only use symbol, not label
+            final_variances[variance] = selected_item[1]
         else:
             final_variances[variance] = variances[variance]["value"]
     
