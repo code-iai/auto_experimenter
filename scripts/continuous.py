@@ -410,6 +410,9 @@ def loadVariances(doc, settings):
         
         if "items" in yaml_variances[variance]:
             final_variances[variance]["items"] = yaml_variances[variance]["items"]
+        
+        if "allow-empty" in yaml_variances[variance]:
+            final_variances[variance]["allow-empty"] = yaml_variances[variance]["allow-empty"]
     
     for setting in settings:
         if not setting in final_variances:
