@@ -144,16 +144,18 @@ def signalHandler(sig, frame):
         p.queue.get()
         p.terminate()
         
-        p.join(10)
-        if p.is_alive():
-            message("Core", "Process", "Process '" + p.name + "' (pid " + str(p.pid) + ") persists after termination, killing it softly.")
-            kill_with_children(p.pid, signal.SIGTERM)
-        
-        p.join(2)
-        if p.is_alive():
-            message("Core", "Process", "Process '" + p.name + "' (pid " + str(p.pid) + ") persists after soft kill, killing it hard.")
-            kill_with_children(p.pid, signal.SIGKILL)
-    
+        try:
+            p.join(10)
+            if p.is_alive():
+                message("Core", "Process", "Process '" + p.name + "' (pid " + str(p.pid) + ") persists after termination, killing it softly.")
+                kill_with_children(p.pid, signal.SIGTERM)
+            
+            p.join(2)
+            if p.is_alive():
+                message("Core", "Process", "Process '" + p.name + "' (pid " + str(p.pid) + ") persists after soft kill, killing it hard.")
+                kill_with_children(p.pid, signal.SIGKILL)
+        except AssertionError:
+            message("Core", "Process", "Process '" + p.name + "' (pid " + str(p.pid) + ") already ended. Leaving its thread.")
     for w in workers:
         w.kill()
     
@@ -524,6 +526,9 @@ if __name__ == "__main__":
         
         variances = loadVariances(doc, variances_settings)
         global_variance = instantiateVariance(variances)
+        
+        for setting in variances_settings:
+            global_variance[setting] = variances_settings[setting]
         
         loadWorkersFromYaml(doc)
         
